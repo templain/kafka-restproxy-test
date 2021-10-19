@@ -1,0 +1,27 @@
+version: '2'
+
+services:
+  zookeeper:
+    build: .
+    volumes:
+      - ./zk_volume:/var/lib/zookeeper
+    entrypoint: "bin/zookeeper-server-start.sh ./config/zookeeper.properties"
+
+  kafka:
+    depends_on:
+      - zookeeper
+    build: .
+    volumes:
+      - ./kf_volume:/var/lib/kafka
+    entrypoint: "bin/kafka-server-start.sh config/server.properties"
+
+  proxy:
+    depends_on:
+      - zookeeper
+      - kafka
+    image: confluentinc/cp-kafka-rest:6.0.0
+    environment:
+      KAFKA_REST_ZOOKEEPER_CONNECT: "zookeeper:2181"
+      KAFKA_REST_BOOTSTRAP_SERVERS: "kafka:9092"
+    ports:
+      - "8082:8082"
